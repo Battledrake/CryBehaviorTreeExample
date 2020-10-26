@@ -1,0 +1,10 @@
+<BehaviorTree>
+ <MetaExtensions />
+ <Root>
+  <Loop>
+   <ExampleReceiveEvent event="Pickles">
+    <ExampleSendEvent event="Pickles"/>
+   </ExampleReceiveEvent>
+  </Loop>
+ </Root>
+</BehaviorTree>
