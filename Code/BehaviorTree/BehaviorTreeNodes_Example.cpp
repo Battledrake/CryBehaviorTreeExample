@@ -123,9 +123,9 @@ public:
 
 protected:
 	virtual void OnInitialize(const UpdateContext& context) override {
-		//This is how we call the event! Can be called after logic, or any the other methods.
 	}
 	virtual Status Update(const UpdateContext& context) override {
+		//This is how we call the event! Can be called after logic, or any the other methods.
 		gEnv->pAISystem->GetIBehaviorTreeManager()->HandleEvent(context.entityId, m_eventToSend);
 		return Running;
 	}
