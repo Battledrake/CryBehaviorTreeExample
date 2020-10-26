@@ -90,6 +90,7 @@ private:
 };
 
 //Here I will demonstrate how to send an event!
+//Ideally, you'd likely send the event from outside a node from something inside the gameworld. But BT nodes can do so too!
 class ExampleSendEvent : public Node {
 	typedef Node BaseClass;
 
@@ -125,7 +126,7 @@ protected:
 	virtual void OnInitialize(const UpdateContext& context) override {
 	}
 	virtual Status Update(const UpdateContext& context) override {
-		//This is how we call the event! Can be called after logic, or any the other methods.
+		//This is how we call the event! Can be called after logic, inside the other methods, or by other non bt nodes.
 		gEnv->pAISystem->GetIBehaviorTreeManager()->HandleEvent(context.entityId, m_eventToSend);
 		return Running;
 	}
