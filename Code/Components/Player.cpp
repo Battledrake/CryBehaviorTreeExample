@@ -24,7 +24,7 @@ void CPlayerComponent::Initialize()
 {
 	// Mark the entity to be replicated over the network
 	m_pEntity->GetNetEntity()->BindToNetwork();
-	
+
 	// Register the RemoteReviveOnClient function as a Remote Method Invocation (RMI) that can be executed by the server on clients
 	SRmi<RMI_WRAP(&CPlayerComponent::RemoteReviveOnClient)>::Register(this, eRAT_NoAttach, false, eNRT_ReliableOrdered);
 }
@@ -39,19 +39,19 @@ void CPlayerComponent::InitializeLocalPlayer()
 
 	// Get the input component, wraps access to action mapping so we can easily get callbacks when inputs are triggered
 	m_pInputComponent = m_pEntity->GetOrCreateComponent<Cry::DefaultComponents::CInputComponent>();
-	
+
 	// Register an action, and the callback that will be sent when it's triggered
-	m_pInputComponent->RegisterAction("player", "moveleft", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveLeft, (EActionActivationMode)activationMode);  }); 
+	m_pInputComponent->RegisterAction("player", "moveleft", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveLeft, (EActionActivationMode)activationMode); });
 	// Bind the 'A' key the "moveleft" action
 	m_pInputComponent->BindAction("player", "moveleft", eAID_KeyboardMouse, EKeyId::eKI_A);
 
-	m_pInputComponent->RegisterAction("player", "moveright", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveRight, (EActionActivationMode)activationMode);  }); 
+	m_pInputComponent->RegisterAction("player", "moveright", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveRight, (EActionActivationMode)activationMode); });
 	m_pInputComponent->BindAction("player", "moveright", eAID_KeyboardMouse, EKeyId::eKI_D);
 
-	m_pInputComponent->RegisterAction("player", "moveforward", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveForward, (EActionActivationMode)activationMode);  }); 
+	m_pInputComponent->RegisterAction("player", "moveforward", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveForward, (EActionActivationMode)activationMode); });
 	m_pInputComponent->BindAction("player", "moveforward", eAID_KeyboardMouse, EKeyId::eKI_W);
 
-	m_pInputComponent->RegisterAction("player", "moveback", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveBack, (EActionActivationMode)activationMode);  }); 
+	m_pInputComponent->RegisterAction("player", "moveback", [this](int activationMode, float value) { HandleInputFlagChange(EInputFlag::MoveBack, (EActionActivationMode)activationMode); });
 	m_pInputComponent->BindAction("player", "moveback", eAID_KeyboardMouse, EKeyId::eKI_S);
 
 	m_pInputComponent->RegisterAction("player", "mouse_rotateyaw", [this](int activationMode, float value) { m_mouseDeltaRotation.x -= value; });
@@ -81,9 +81,9 @@ void CPlayerComponent::ProcessEvent(const SEntityEvent& event)
 	case Cry::Entity::EEvent::Update:
 	{
 		// Don't update the player if we haven't spawned yet
-		if(!m_isAlive)
+		if (!m_isAlive)
 			return;
-		
+
 		const float frameTime = event.fParam[0];
 
 		const float moveSpeed = 20.5f;
@@ -141,7 +141,7 @@ void CPlayerComponent::ProcessEvent(const SEntityEvent& event)
 
 bool CPlayerComponent::NetSerialize(TSerialize ser, EEntityAspects aspect, uint8 profile, int flags)
 {
-	if(aspect == InputAspect)
+	if (aspect == InputAspect)
 	{
 		ser.BeginGroup("PlayerInput");
 
@@ -168,14 +168,14 @@ bool CPlayerComponent::NetSerialize(TSerialize ser, EEntityAspects aspect, uint8
 
 		ser.EndGroup();
 	}
-	
+
 	return true;
 }
 
 void CPlayerComponent::OnReadyForGameplayOnServer()
 {
 	CRY_ASSERT(gEnv->bServer, "This function should only be called on the server!");
-	
+
 	Vec3 playerScale = Vec3(1.f);
 	Quat playerRotation = IDENTITY;
 
@@ -186,28 +186,28 @@ void CPlayerComponent::OnReadyForGameplayOnServer()
 	const Vec3 playerPosition = Vec3(terrainCenter, terrainCenter, height + heightOffset);
 
 	const Matrix34 newTransform = Matrix34::Create(playerScale, playerRotation, playerPosition);
-	
+
 	Revive(newTransform);
-	
+
 	// Invoke the RemoteReviveOnClient function on all remote clients, to ensure that Revive is called across the network
 	SRmi<RMI_WRAP(&CPlayerComponent::RemoteReviveOnClient)>::InvokeOnOtherClients(this, RemoteReviveParams{ playerPosition, playerRotation });
-	
+
 	// Go through all other players, and send the RemoteReviveOnClient on their instances to the new player that is ready for gameplay
 	const int channelId = m_pEntity->GetNetEntity()->GetChannelId();
 	CGamePlugin::GetInstance()->IterateOverPlayers([this, channelId](CPlayerComponent& player)
-	{
-		// Don't send the event for the player itself (handled in the RemoteReviveOnClient event above sent to all clients)
-		if (player.GetEntityId() == GetEntityId())
-			return;
+		{
+			// Don't send the event for the player itself (handled in the RemoteReviveOnClient event above sent to all clients)
+			if (player.GetEntityId() == GetEntityId())
+				return;
 
-		// Only send the Revive event to players that have already respawned on the server
-		if (!player.m_isAlive)
-			return;
+			// Only send the Revive event to players that have already respawned on the server
+			if (!player.m_isAlive)
+				return;
 
-		// Revive this player on the new player's machine, on the location the existing player was currently at
-		const QuatT currentOrientation = QuatT(player.GetEntity()->GetWorldTM());
-		SRmi<RMI_WRAP(&CPlayerComponent::RemoteReviveOnClient)>::InvokeOnClient(&player, RemoteReviveParams{ currentOrientation.t, currentOrientation.q }, channelId);
-	});
+			// Revive this player on the new player's machine, on the location the existing player was currently at
+			const QuatT currentOrientation = QuatT(player.GetEntity()->GetWorldTM());
+			SRmi<RMI_WRAP(&CPlayerComponent::RemoteReviveOnClient)>::InvokeOnClient(&player, RemoteReviveParams{ currentOrientation.t, currentOrientation.q }, channelId);
+		});
 }
 
 bool CPlayerComponent::RemoteReviveOnClient(RemoteReviveParams&& params, INetChannel* pNetChannel)
@@ -221,18 +221,18 @@ bool CPlayerComponent::RemoteReviveOnClient(RemoteReviveParams&& params, INetCha
 void CPlayerComponent::Revive(const Matrix34& transform)
 {
 	m_isAlive = true;
-	
+
 	// Set the entity transformation, except if we are in the editor
 	// In the editor case we always prefer to spawn where the viewport is
-	if(!gEnv->IsEditor())
+	if (!gEnv->IsEditor())
 	{
 		m_pEntity->SetWorldTM(transform);
 	}
-	
+
 	// Reset input now that the player respawned
 	m_inputFlags.Clear();
 	NetMarkAspectsDirty(InputAspect);
-	
+
 	m_mouseDeltaRotation = ZERO;
 }
 
@@ -262,8 +262,8 @@ void CPlayerComponent::HandleInputFlagChange(const CEnumFlags<EInputFlag> flags,
 	}
 	break;
 	}
-	
-	if(IsLocalClient())
+
+	if (IsLocalClient())
 	{
 		NetMarkAspectsDirty(InputAspect);
 	}

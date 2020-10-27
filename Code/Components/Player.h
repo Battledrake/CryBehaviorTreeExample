@@ -30,7 +30,7 @@ class CPlayerComponent final : public IEntityComponent
 	};
 
 	static constexpr EEntityAspects InputAspect = eEA_GameClientD;
-	
+
 public:
 	CPlayerComponent() = default;
 	virtual ~CPlayerComponent() = default;
@@ -40,7 +40,7 @@ public:
 
 	virtual Cry::Entity::EventFlags GetEventMask() const override;
 	virtual void ProcessEvent(const SEntityEvent& event) override;
-	
+
 	virtual bool NetSerialize(TSerialize ser, EEntityAspects aspect, uint8 profile, int flags) override;
 	virtual NetworkAspectType GetNetSerializeAspectMask() const override { return InputAspect; }
 	// ~IEntityComponent
@@ -53,14 +53,14 @@ public:
 
 	void OnReadyForGameplayOnServer();
 	bool IsLocalClient() const { return (m_pEntity->GetFlags() & ENTITY_FLAG_LOCAL_PLAYER) != 0; }
-	
+
 protected:
 	void Revive(const Matrix34& transform);
 	void HandleInputFlagChange(CEnumFlags<EInputFlag> flags, CEnumFlags<EActionActivationMode> activationMode, EInputFlagType type = EInputFlagType::Hold);
 
 	// Called when this entity becomes the local player, to create client specific setup such as the Camera
 	void InitializeLocalPlayer();
-	
+
 	// Start remote method declarations
 protected:
 	// Parameters to be passed to the RemoteReviveOnClient function
@@ -75,13 +75,13 @@ protected:
 			// Serialize the rotation with the 'ori0' compression policy
 			ser.Value("rot", rotation, 'ori0');
 		}
-		
+
 		Vec3 position;
 		Quat rotation;
 	};
 	// Remote method intended to be called on all remote clients when a player spawns on the server
 	bool RemoteReviveOnClient(RemoteReviveParams&& params, INetChannel* pNetChannel);
-	
+
 protected:
 	bool m_isAlive = false;
 

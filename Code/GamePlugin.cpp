@@ -36,7 +36,7 @@ bool CGamePlugin::Initialize(SSystemGlobalEnvironment& env, const SSystemInitPar
 {
 	// Register for engine system events, in our case we need ESYSTEM_EVENT_GAME_POST_INIT to load the map
 	gEnv->pSystem->GetISystemEventDispatcher()->RegisterListener(this, "CGamePlugin");
-	
+
 	return true;
 }
 
@@ -45,50 +45,50 @@ void CGamePlugin::OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lp
 	switch (event)
 	{
 		// Called when the game framework has initialized and we are ready for game logic to start
-		case ESYSTEM_EVENT_GAME_POST_INIT:
-		{
-			// Listen for client connection events, in order to create the local player
-			gEnv->pGameFramework->AddNetworkedClientListener(*this);
+	case ESYSTEM_EVENT_GAME_POST_INIT:
+	{
+		// Listen for client connection events, in order to create the local player
+		gEnv->pGameFramework->AddNetworkedClientListener(*this);
 
-			// Don't need to load the map in editor
-			if (!gEnv->IsEditor())
-			{
-				// Load the example map in client server mode
-				gEnv->pConsole->ExecuteString("map example s", false, true);
-			}
-			RegisterExampleNodes();
-		}
-		break;
-
-		case ESYSTEM_EVENT_REGISTER_SCHEMATYC_ENV:
+		// Don't need to load the map in editor
+		if (!gEnv->IsEditor())
 		{
-			// Register all components that belong to this plug-in
-			auto staticAutoRegisterLambda = [](Schematyc::IEnvRegistrar& registrar)
-			{
-				// Call all static callback registered with the CRY_STATIC_AUTO_REGISTER_WITH_PARAM
-				Detail::CStaticAutoRegistrar<Schematyc::IEnvRegistrar&>::InvokeStaticCallbacks(registrar);
-			};
+			// Load the example map in client server mode
+			gEnv->pConsole->ExecuteString("map example s", false, true);
+		}
+		RegisterExampleNodes();
+	}
+	break;
 
-			if (gEnv->pSchematyc)
-			{
-				gEnv->pSchematyc->GetEnvRegistry().RegisterPackage(
-					stl::make_unique<Schematyc::CEnvPackage>(
-						CGamePlugin::GetCID(),
-						"EntityComponents",
-						"Crytek GmbH",
-						"Components",
-						staticAutoRegisterLambda
-						)
-				);
-			}
-		}
-		break;
-		
-		case ESYSTEM_EVENT_LEVEL_UNLOAD:
+	case ESYSTEM_EVENT_REGISTER_SCHEMATYC_ENV:
+	{
+		// Register all components that belong to this plug-in
+		auto staticAutoRegisterLambda = [](Schematyc::IEnvRegistrar& registrar)
 		{
-			m_players.clear();
+			// Call all static callback registered with the CRY_STATIC_AUTO_REGISTER_WITH_PARAM
+			Detail::CStaticAutoRegistrar<Schematyc::IEnvRegistrar&>::InvokeStaticCallbacks(registrar);
+		};
+
+		if (gEnv->pSchematyc)
+		{
+			gEnv->pSchematyc->GetEnvRegistry().RegisterPackage(
+				stl::make_unique<Schematyc::CEnvPackage>(
+					CGamePlugin::GetCID(),
+					"EntityComponents",
+					"Crytek GmbH",
+					"Components",
+					staticAutoRegisterLambda
+					)
+			);
 		}
-		break;
+	}
+	break;
+
+	case ESYSTEM_EVENT_LEVEL_UNLOAD:
+	{
+		m_players.clear();
+	}
+	break;
 	}
 }
 
@@ -97,11 +97,11 @@ bool CGamePlugin::OnClientConnectionReceived(int channelId, bool bIsReset)
 	// Connection received from a client, create a player entity and component
 	SEntitySpawnParams spawnParams;
 	spawnParams.pClass = gEnv->pEntitySystem->GetClassRegistry()->GetDefaultClass();
-	
+
 	// Set a unique name for the player entity
 	const string playerName = string().Format("Player%" PRISIZE_T, m_players.size());
 	spawnParams.sName = playerName;
-	
+
 	// Set local player details
 	if (m_players.empty() && !gEnv->IsDedicated())
 	{
